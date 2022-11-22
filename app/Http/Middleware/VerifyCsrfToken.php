@@ -37,6 +37,9 @@ class VerifyCsrfToken extends Middleware
         'https://call1.harmoniecrm.com/louanes/harmony_api/index.php/get_call_logs',
         'https://call1.harmoniecrm.com/louanes/harmony_api/index.php/get_unique_id',
         'https://call1.harmoniecrm.com/louanes/harmony_api/index.php/update_qualif_contact',
+        'https://call1.harmoniecrm.com/louanes/harmony_api/index.php/get_user_name',
+        'https://call1.harmoniecrm.com/louanes/harmony_api/index.php/manual_dial',
+        'https://call1.harmoniecrm.com/louanes/harmony_api/index.php/get_phone_info',
     
 
     ];

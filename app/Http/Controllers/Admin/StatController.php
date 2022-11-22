@@ -36,24 +36,56 @@ class StatController extends Controller
 
     public function ExportList(Request $request){
         $data = [];
-        $lists = DB::table('vicidial_list')->where('vicidial_list.list_id','222201')
-        ->join('custom_222201','custom_222201.lead_id','=','vicidial_list.lead_id')
-        ->select('vicidial_list.*','custom_222201.*')
-        ->where('vicidial_list.status','<>','NEW')
-        ->where('vicidial_list.user','<>','')
-        ->where('vicidial_list.status','<>','INCALL')
-        ->where(DB::raw("(DATE_FORMAT(modify_date,'%Y-%m-%d'))"),$request->date)->get();
+            if($request->campaign_id == 1000101){
+                $list_id = '14112022';
+            }else{
+                $list_id = '141120221';
+            }
+        if($request->type == 1){
+            
+                $lists = DB::table('vicidial_list')->where('vicidial_list.list_id',$list_id)
+                ->join('custom_'.$list_id,'custom_'.$list_id.'.lead_id','=','vicidial_list.lead_id')
+                ->select('vicidial_list.*','custom_'.$list_id.'.*')
+                //->where('custom_'.$list_id.'.lead_id','>','1809279')
+                //->where('custom_'.$list_id.'.lead_id','<','1819280')
+                ->where(DB::raw("(DATE_FORMAT(entry_date,'%Y-%m-%d'))"),$request->date_injection)
+                ->get();
+        }else{
+            $lists = DB::table('vicidial_list')->where('vicidial_list.list_id',$list_id)
+            ->join('custom_'.$list_id,'custom_'.$list_id.'.lead_id','=','vicidial_list.lead_id')
+            ->select('vicidial_list.*','custom_'.$list_id.'.*')
+            ->where('vicidial_list.status','<>','NEW')
+            ->where('vicidial_list.user','<>','')
+            ->where('vicidial_list.status','<>','INCALL')
+            ->where(DB::raw("(DATE_FORMAT(modify_date,'%Y-%m-%d'))"),$request->date)->get();
+        }
+        
         //$data['lists'] = $lists;
         
         return response()->json($lists);
     }
+    public function getUserName(Request $request){
+        $agentId = $request->user_id;
 
+        $Agent = DB::table('vicidial_users')->where('user',$agentId)->first();
+        if(!$Agent){
+            $data['etat'] = 500;
+            return response()->json($data);
+        }else{
+            $data['etat'] = 200;
+            $data['full_name'] = $Agent->full_name;
+            return response()->json($data);
+
+        }
+        
+        
+    }
     public function getQualifPositive(Request $request){
         $agent = $request->user;
         $date = $request->date;
         $positive = ['DMPDC','DMPDL'];
 
-        $qualifPos = DB::table('vicidial_list')->where(DB::raw("(DATE_FORMAT(modify_date,'%Y-%m-%d'))"),$request->date)
+        $qualifPos = DB::table('vicidial_log')->where(DB::raw("(DATE_FORMAT(call_date,'%Y-%m-%d'))"),$request->date)
                                                ->whereIn('status',$positive)->where('user',$agent)->count();
         return response()->json($qualifPos);
     }
@@ -64,7 +96,7 @@ class StatController extends Controller
         $argumenter = ['DM','DMPDC','DMPDL','DL','DLDPD','DLDANC','DLDAYC','DLDAIB',
                 'DLDDIB','IND','INDOLD','PA','PAPAC','PAPAL','RA','RAA','RADPT','RADAAS','RAEN','RAPM','RATSNR','RADAS'];
 
-        $qualifArg = DB::table('vicidial_list')->where(DB::raw("(DATE_FORMAT(modify_date,'%Y-%m-%d'))"),$request->date)
+        $qualifArg = DB::table('vicidial_log')->where(DB::raw("(DATE_FORMAT(call_date,'%Y-%m-%d'))"),$request->date)
                                                ->whereIn('status',$argumenter)->where('user',$agent)->count();
         return response()->json($qualifArg);
     }

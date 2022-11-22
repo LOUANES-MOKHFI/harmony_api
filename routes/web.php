@@ -58,7 +58,9 @@ Route::post('get_time_incall', [ActionAgentController::class, 'getTimeIncall'])-
 Route::post('get_call_logs', [ActionAgentController::class, 'getCallLogs'])->name('get_call_logs');
 Route::post('get_unique_id', [ActionAgentController::class, 'getUniqueId'])->name('get_unique_id');
 
-
+///// Manual Dial
+Route::post('manual_dial', [ActionAgentController::class, 'ManualDial'])->name('manual_dial');
+Route::post('get_phone_info', [ActionAgentController::class, 'getPhoneInfo'])->name('get_phone_info');
 
 
 
@@ -67,10 +69,11 @@ Route::post('get_unique_id', [ActionAgentController::class, 'getUniqueId'])->nam
 
 ////stat
 Route::post('agent_time_detail', [StatController::class, 'getAgentTimeDetail'])->name('agent_time_detail');
-Route::post('export_list', [StatController::class, 'ExportList'])->name('export_list');
+//Route::get('export_list', [StatController::class, 'ExportList'])->name('export_list');
 Route::post('export_list', [StatController::class, 'ExportList'])->name('export_list');
 Route::post('get_Qualif_Positive', [StatController::class, 'getQualifPositive'])->name('get_Qualif_Positive');
 Route::post('get_Qualif_Argumenter', [StatController::class, 'getQualifArgummenter'])->name('get_Qualif_Argumenter');
 Route::post('get_live_statistic_agent', [ActionAgentController::class, 'getLiveStatisticAgent'])->name('get_live_statistic_agent');
+Route::post('get_user_name', [StatController::class, 'getUserName'])->name('get_user_name');
 
 

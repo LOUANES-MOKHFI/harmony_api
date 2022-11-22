@@ -11,7 +11,7 @@ class CampaignController extends Controller
     public function campaigns(){
         $data = [];
         
-        $campaigns = DB::table('vicidial_campaigns')->select('campaign_id','campaign_name')->get();
+        $campaigns = DB::table('vicidial_campaigns')->select('campaign_id','campaign_name')->where('active','Y')->get();
        // return new CampaignRessource($campaigns);
         foreach ( $campaigns as $campaign ) {
             $data[] = [ 

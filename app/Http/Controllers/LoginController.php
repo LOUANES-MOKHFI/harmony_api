@@ -20,6 +20,7 @@ class LoginController extends Controller
         $campaign = $request->campaign;
         $StarTtimE = date("U");
         $user = DB::table('vicidial_users')->where('user',$username)->where('pass',$pass)->first();
+        //$user = DB::table('vicidial_users')->where('user',$username)->where('pass',$pass)->first();
         if(!empty($user)){
             $http = new \GuzzleHttp\Client(); 
             $response = $http->post('https://call1.harmoniecrm.com/agc/vicidial.php', [
@@ -63,8 +64,12 @@ class LoginController extends Controller
                 ],
             ]);
 
-
-            //return response()->json($response1->getBody()->getContents());
+            if(str_contains($response->getBody()->getContents(),'<b><font class="skb_text">Sorry, there are no leads in the hopper for this campaign</b>')){
+                $data['etat'] = 401;
+                $data['msg'] = 'Aucun Lead existe dans cette list, veuillez contactez le support svp !!';
+                return response()->json($data);
+            }
+            
             //$responseWebPhone = $http->post('https://call1.harmoniecrm.com/agc/api.php?source=test&user=66666&pass=0551797kamel2022&agent_user='.$username.'&function=webphone_url&value=DISPLAY');
             
             if($response->getStatusCode() == 200){
@@ -78,7 +83,7 @@ class LoginController extends Controller
                 ->where('campaign_id',$campaign)->where('sub_status','LOGIN')
                 ->where('pause_sec',0)->orderBy('agent_log_id','DESC')->first();
                 $session = DB::table('vicidial_session_data')->where('user',$user->user)->where('server_ip',$phone->server_ip)->where('campaign_id',$campaign)->first();
-               
+                //return response()->json($phone->server_ip);
                 $agent_log_id = $agent_Log->agent_log_id;
                 $campaign_id = $agent_Log->campaign_id;
                 $protocol = $phone->protocol;
@@ -155,7 +160,7 @@ class LoginController extends Controller
                 // return response()->json($content);
                 $http = new \GuzzleHttp\Client();
                 $responseWebPhone = $http->post('https://call1.harmoniecrm.com/agc/api.php?source=test&user=66666&pass=0551797kamel2022&agent_user='.$data['user'].'&function=call_agent&value=CALL');
-            $dial_method = $campaignn->dial_method;
+                $dial_method = $campaignn->dial_method;
                if($dial_method == "INBOUND_MAN"){
                 $VICIDiaL_closer_blended = 0;
                }else{
