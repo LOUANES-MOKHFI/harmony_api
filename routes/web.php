@@ -10,6 +10,7 @@ use App\Http\Controllers\FaxMobileController;
 use App\Http\Controllers\CampaignController;
 use App\Http\Controllers\ActionAgentController;
 use App\Http\Controllers\Admin\StatController;
+use App\Http\Controllers\Admin\CampaigneController;
 
 
 
@@ -62,9 +63,13 @@ Route::post('get_unique_id', [ActionAgentController::class, 'getUniqueId'])->nam
 Route::post('manual_dial', [ActionAgentController::class, 'ManualDial'])->name('manual_dial');
 Route::post('get_phone_info', [ActionAgentController::class, 'getPhoneInfo'])->name('get_phone_info');
 
+//// get live callback
+Route::post('get_live_callback', [ActionAgentController::class, 'getLiveCallback'])->name('get_live_callback');
 
+///// get all pause code
 
-
+Route::post('get_pauses_codes', [ActionAgentController::class, 'getPausesCode'])->name('get_pauses_codes');
+Route::post('change_pause_code', [ActionAgentController::class, 'changePausesCode'])->name('change_pause_code');
 
 
 ////stat
@@ -75,5 +80,14 @@ Route::post('get_Qualif_Positive', [StatController::class, 'getQualifPositive'])
 Route::post('get_Qualif_Argumenter', [StatController::class, 'getQualifArgummenter'])->name('get_Qualif_Argumenter');
 Route::post('get_live_statistic_agent', [ActionAgentController::class, 'getLiveStatisticAgent'])->name('get_live_statistic_agent');
 Route::post('get_user_name', [StatController::class, 'getUserName'])->name('get_user_name');
+
+Route::post('get_all_agents', [StatController::class, 'get_all_agents'])->name('get_all_agents');
+
+
+////ADMIN
+
+
+Route::get('get_all_campaigns', [CampaigneController::class, 'get_all_campaigns'])->name('get_all_campaigns');
+Route::post('new_show_stat_agents', [StatController::class, 'new_show_stat_agents'])->name('new_show_stat_agents');
 
 

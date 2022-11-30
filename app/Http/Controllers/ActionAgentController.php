@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Http;
 use GuzzleHttp\Client;
 class ActionAgentController extends Controller
 {
+    
     //// fonction qui récuperer la liste des status
     public function getCampaignStatus(){
         $data = [];
@@ -193,18 +194,29 @@ class ActionAgentController extends Controller
 
         if($response1->getStatusCode() == 200 && $liveagent->lead_id>0){
             
-            //$list = DB::table('vicidial_list')->where('lead_id',$liveagent->lead_id)->first();
-            if($campaign == '1000101'){
+            $list = DB::table('vicidial_list')->where('lead_id',$liveagent->lead_id)->first();
+
+            $list_id = $list->list_id;
+            $called_count = $list->called_count;
+            $table = 'custom_'.$list_id;
+            //return response()->json($list_id);
+            $list = DB::table($table)
+                        ->where($table.'.lead_id',$liveagent->lead_id)->first();
+            //return response()->json($list);
+            /*if($campaign == '1000101'){
                 $list = DB::table('vicidial_list')->where('vicidial_list.list_id','14112022')
                 ->join('custom_14112022','custom_14112022.lead_id','=','vicidial_list.lead_id')
                 ->select('vicidial_list.*','custom_14112022.*')
+                ->where('vicidial_list.lead_id',$liveagent->lead_id)->first();
+                 $list = DB::table('custom_14112022')->where('custom_14112022.list_id','14112022')
+                ->select('custom_14112022.*')
                 ->where('vicidial_list.lead_id',$liveagent->lead_id)->first();
             }elseif($campaign == '2000202'){
                 $list = DB::table('vicidial_list')->where('vicidial_list.list_id','141120221')
                 ->join('custom_141120221','custom_141120221.lead_id','=','vicidial_list.lead_id')
                 ->select('vicidial_list.*','custom_141120221.*')
                 ->where('vicidial_list.lead_id',$liveagent->lead_id)->first();
-            }
+            }*/
             
             //return response()->json($list);
             $phone = DB::table('phones')->where('login', $request->phone_login)
@@ -218,11 +230,11 @@ class ActionAgentController extends Controller
 
             $data['agentchannel'] = $LiveSipChannel->channel;
             $data['id_total'] = $list->id_total;
-            $data['list_id'] = $list->list_id;
-            $data['called_count'] = $list->called_count;
+            $data['list_id'] = $list_id;
+            $data['called_count'] = $called_count;
             $data['uniqueid'] = $liveagent->uniqueid;
             $data['lead_id'] = $liveagent->lead_id;
-            $data['gender'] = $list->gender;
+            //$data['gender'] = $list->gender;
             $data['adr1_civilite_abrv'] = $list->adr1_civilite_abrv;
             $data['contact_nom'] = $list->contact_nom;
             $data['contact_prenom'] = $list->contact_prenom;
@@ -330,6 +342,7 @@ class ActionAgentController extends Controller
         $channelrec = "Local/".$conf_silent_prefix.$session_id.'@'.$ext_context;
         $called_count = $request->called_count; 
         $uniqueid = $request->uniqueid;
+        $uniqueid1 = $request->uniqueid1;
         $phone_number = $request->phone_number;
         $phone_code = $request->phone_code;
         
@@ -380,7 +393,7 @@ class ActionAgentController extends Controller
                 'server_ip' => $server_ip,
                 'session_name' => $session_name,
                 'stage'        => $taskMDstage,
-                'uniqueid'     => $uniqueid,
+                'uniqueid'     => $uniqueid == 0 ? $uniqueid1 : $uniqueid,
                 'user' => $username,
                 'pass' => $pass,
                 'campaign'    => $campaign,
@@ -485,6 +498,7 @@ class ActionAgentController extends Controller
             $LOGemail = $userLogged->email != '' ? $userLogged->email : '';
             $in_script = '';
             $lead_id = $request->lead_id; ////////
+            $VU_user_group = $userLogged->user_group;
             $dispo_choice = $request->dispo_choice; ////// choice qualif
             $list_id = $request->list_id;
             $CallBackDatETimE = $request->CallBackDatETimE == null ? '' : $request->CallBackDatETimE;/////
@@ -496,6 +510,7 @@ class ActionAgentController extends Controller
             $phone_number = $request->phone_number;
             $phone_code = $request->phone_code;
             $uniqueid = $request->uniqueid;
+            $uniqueid1 = $request->uniqueid1;
             $CallBackLeadStatus = $request->CallBackLeadStatus;
             $comments = $request->comments == null ? '' : $request->comments;////////
             $custom_field_names = '';
@@ -516,6 +531,23 @@ class ActionAgentController extends Controller
             $MDnextCID = '';
             $called_count = $request->called_count;
             $http = new \GuzzleHttp\Client(); 
+            $response3 = $http->post('https://call1.harmoniecrm.com/agc/vdc_db_query.php', [
+                'form_params' => [
+                    'server_ip' => $server_ip,
+                    'session_name' => $session_name,
+                    'user' => $username,
+                    'pass' => $pass,
+                    'orig_pass' => $pass,
+                    'lead_id'      => $lead_id,
+                    'stage'           => $lead_id,
+                    'phone_number'    => $phone_number, 
+                    'campaign'        => $campaign,
+                    'agent_log_id'    => $agent_log_id,
+                    'conf_exten'        => $session_id,
+                    'user_group'        => $VU_user_group,
+                    'ACTION'       => 'LeaDSearcHSelecTUpdatE'
+                ],
+            ]);
             $response2 = $http->post('https://call1.harmoniecrm.com/agc/vdc_db_query.php', [
                 'form_params' => [
                     'server_ip' => $server_ip,
@@ -534,12 +566,12 @@ class ActionAgentController extends Controller
                     'use_internal_dnc'=> $use_internal_dnc,
                     'use_campaign_dnc'=> $use_campaign_dnc,
                     'MDnextCID'       => $MDnextCID,
-                    'stage'           => $campaign, 
+                    'stage'           => 'end', 
                     'vtiger_callback_id'=> $vtiger_callback_id,
                     'phone_number'    => $phone_number,
                     'phone_code'      => $phone_code, 
                     'dial_method'     => $dial_method,
-                    'uniqueid'        => $uniqueid, 
+                    'uniqueid'     => $uniqueid == 0 ? $uniqueid1 : $uniqueid , 
                     'CallBackLeadStatus' => $CallBackLeadStatus,
                     'comments'        => $comments,
                     'custom_field_names'=> $custom_field_names,
@@ -569,15 +601,13 @@ class ActionAgentController extends Controller
                     'ACTION'       => 'updateDISPO'
                 ],
             ]);
+            //return response()->json($response2->getBody()->getContents());
+
             
+            
+            //return response()->json($response3->getBody()->getContents());
             $content = $response2->getBody()->getContents();
             //return response()->json($content);
-            /////update montant don
-            /*$list = DB::table('vicidial_list')->where('vicidial_list.lead_id',$lead_id)
-            ->join('custom_14112022','custom_14112022.lead_id','=','vicidial_list.lead_id')
-            ->select('vicidial_list.*','custom_14112022.*')->update([
-                'accord_montant' => $request->montant_don,
-            ]);*/
             if(str_contains($content,'Lead '.$lead_id.' has been changed to '.$dispo_choice.' Status') && $response2->getStatusCode() == 200){
                 $data['dispo_choice'] = $dispo_choice;
                 $data['etat'] = 200;
@@ -634,51 +664,6 @@ class ActionAgentController extends Controller
          }  
     }
 
-    
-
-    /*public function activateWebphone(Request $request){
-        $http = new \GuzzleHttp\Client();
-        $phone = DB::table('phones')->where('login',$request->phone_login)
-                                    ->where('pass',$request->phone_pass)
-                                    ->where('active','Y')->first();
-        $ext_context = $phone->ext_context;
-        $phone_ip = $phone->phone_ip;
-        $outbound_cid = $phone->outbound_cid;
-        $enable_sipsak_messages = $phone->enable_sipsak_messages;
-        $system_settings = DB::table('system_settings')->get()[0];
-        $allow_sipsak_messages = $system_settings->allow_sipsak_messages;
-        $user_abb = $request->user.$request->user.$request->user.$request->user;
-        $epoch_sec = date("U");
-        $queryCID = 'HXvdcW'.$epoch_sec.$user_abb;
-        $response = $http->post('https://call1.harmoniecrm.com/agc/vdc_db_query.php', [
-                'form_params' => [
-                    'server_ip' => $request->server_ip,
-                    'session_name' => $request->session_name,
-                    'user' => $request->user,
-                    'pass' => $request->pass,
-                    'channel' => '',
-                    'queryCID' => $queryCID,
-                    'exten'      => $request->conf_exten,
-                    'ext_context' => $ext_context,
-                    'ext_priority' => '1',
-                    'extension'    => $request->extension,
-                    'protocol'=> $request->protocol,
-                    'phone_ip'         => $phone_ip,
-                    'enable_sipsak_messages'       => $enable_sipsak_messages,
-                    'allow_sipsak_messages'=> $allow_sipsak_messages,
-                    'campaign'=> $request->campaign,
-                    'outbound_cid'       => $outbound_cid,
-                    'format'       =>'text',
-                    'ACTION'       => 'OriginateVDRelogin',
-                ],
-            ]);
-        $content = $response->getBody()->getcontents();
-        $contents = json_decode($content);
-
-        $data['etat'] = 200;
-        return response()->json($data);
-    }*/
-
 
     //// fonction qui activer le webphone apres 5 sec de l'actualisation de la page ou lors de clique sur button webphone
     public function activateWebphone(Request $request){
@@ -694,15 +679,28 @@ class ActionAgentController extends Controller
         $campaign = $request->campaign;
         $liveagent = DB::table('vicidial_live_agents')->where('user',$user)->first();
         if(!empty($liveagent)){
-            if($campaign == 1000101){
+            /*if($campaign == 1000101){
                 $list_id = '14112022';
             }else{
                 $list_id = '141120221';
-            }
-            $data['lead'] = DB::table('vicidial_list')->where('vicidial_list.user',$user)->where('vicidial_list.lead_id',$lead_id)
+            }*/
+
+            /*$data['lead'] = DB::table('vicidial_list')->where('vicidial_list.user',$user)->where('vicidial_list.lead_id',$lead_id)
             ->join('custom_'.$list_id,'custom_'.$list_id.'.lead_id','=','vicidial_list.lead_id')
-            ->select('vicidial_list.*','custom_'.$list_id.'.*')->first();
-            $vicidial_log = DB::table('vicidial_log')->select('uniqueid')->where('lead_id',$lead_id)->where('list_id',$data['lead']->list_id)->where('user',$user)->first();
+            ->select('vicidial_list.*','custom_'.$list_id.'.*')->first();*/
+
+            
+            $list = DB::table('vicidial_list')->where('vicidial_list.user',$user)
+                                              ->where('vicidial_list.lead_id',$lead_id)->first();
+            $list_id = $list->list_id;
+            //$called_count = $list->called_count;
+            $table = 'custom_'.$list_id;
+            //return response()->json($list_id);
+            $data['lead'] = DB::table($table)->where($table.'.lead_id',$lead_id)->first();
+            //return response()->json($data);
+            $vicidial_log = DB::table('vicidial_log')->select('uniqueid')->where('lead_id',$lead_id)->where('list_id',$list_id)->where('user',$user)->first();
+
+
             $data['uniqueid'] = $vicidial_log->uniqueid;
             $data['etat'] = 200;
             return response()->json($data);
@@ -720,16 +718,24 @@ class ActionAgentController extends Controller
         $campaign = $request->campaign;
         $liveagent = DB::table('vicidial_live_agents')->where('user',$user)->first();
         if(!empty($liveagent)){
-            if($campaign == 1000101){
+            /*if($campaign == 1000101){
                 $list_id = '14112022';
             }else{
                 $list_id = '141120221';
-            }
-            $data['lead'] = DB::table('vicidial_list')->where('vicidial_list.phone_number',$phone_number)
+            }*/
+            /*$data['lead'] = DB::table('vicidial_list')->where('vicidial_list.phone_number',$phone_number)
             ->join('custom_'.$list_id,'custom_'.$list_id.'.lead_id','=','vicidial_list.lead_id')
-            ->select('vicidial_list.*','custom_'.$list_id.'.*')->first();
+            ->select('vicidial_list.*','custom_'.$list_id.'.*')->first();*/
 
-            $vicidial_log = DB::table('vicidial_log')->select('uniqueid')->where('lead_id',$lead_id)->where('list_id',$data['lead']->list_id)->where('user',$user)->first();
+            $list = DB::table('vicidial_list')->where('vicidial_list.phone_number',$phone_number)
+                                              ->first();
+            $list_id = $list->list_id;
+            //$called_count = $list->called_count;
+            $table = 'custom_'.$list_id;
+            //return response()->json($list_id);
+            $data['lead'] = DB::table($table)->where($table.'.lead_id',$list->lead_id)->first();
+
+            $vicidial_log = DB::table('vicidial_log')->select('uniqueid')->where('lead_id',$list->lead_id)->where('list_id',$list_id)->where('user',$user)->first();
 
             $data['uniqueid'] = $vicidial_log->uniqueid;
             $data['etat'] = 200;
@@ -745,19 +751,15 @@ class ActionAgentController extends Controller
     public function updateLeadInfo(Request $request){
         
         $data = [];
-        if($request->campaign == 1000101){
-                $list_id = '14112022';
-            }else{
-                $list_id = '141120221';
-            }
-        $list = DB::table('vicidial_list')->where('vicidial_list.lead_id',$request->lead_id)
-            ->join('custom_'.$list_id,'custom_'.$list_id.'.lead_id','=','vicidial_list.lead_id')
-            ->select('vicidial_list.*','custom_'.$list_id.'.*')->first();
+        
+        $lead_id = $request->lead_id;
+        $list = DB::table('vicidial_list')->where('lead_id',$lead_id)
+                                              ->first();
         if(!empty($list)){
-            $list = DB::table('vicidial_list')->where('vicidial_list.lead_id',$request->lead_id)
-            ->join('custom_'.$list_id,'custom_'.$list_id.'.lead_id','=','vicidial_list.lead_id')
-            ->select('vicidial_list.*','custom_'.$list_id.'.*')
-            ->update([
+            $list_id = $list->list_id;
+            $table = 'custom_'.$list_id;
+
+            $list_custom = DB::table($table)->where($table.'.lead_id',$lead_id)->update([
                 'new_contact_nom' => $request->new_contact_nom,
                 'new_contact_prenom' => $request->new_contact_prenom,
                 'new_raison_sociale' => $request->new_raison_sociale,
@@ -778,6 +780,11 @@ class ActionAgentController extends Controller
                 //'envoi_courrier' => $request->envoi_courrier,
                 'accord_montant' => $request->montant_don,
             ]);
+
+            $list_principal = DB::table('vicidial_list')->where('vicidial_list.lead_id',$lead_id)->update([
+                'comments' => $request->commentaire,
+            ]);
+
             $data['etat'] = 200;
             //$data['list'] = $list;
             return response()->json($data);
@@ -809,6 +816,7 @@ class ActionAgentController extends Controller
         
         
     }
+    //// Function who implement a Manualdial with a phone number
     public function ManualDial(Request $request){
         $server_ip = $request->server_ip; ///sesssion
         $session_name = $request->session_name; ///sesssion
@@ -820,7 +828,9 @@ class ActionAgentController extends Controller
         $campaign = $request->campaign; //// session
         $phone_number = $request->phone_number; ///  view 
         $phone_code = $request->phone_code; //// view
+        
         $liveagent = DB::table('vicidial_live_agents')->where('user',$user)->first();
+        //return response()->json($liveagent);
         if(!empty($liveagent)){
             if($campaign == 1000101){
                 $list_id = '14112022';
@@ -830,16 +840,17 @@ class ActionAgentController extends Controller
             $data['lead'] = DB::table('vicidial_list')->where('vicidial_list.phone_number',$phone_number)
             ->join('custom_'.$list_id,'custom_'.$list_id.'.lead_id','=','vicidial_list.lead_id')
             ->select('vicidial_list.*','custom_'.$list_id.'.*')->first();
-
+            //return response()->json($data['lead']);
             $vicidial_log = DB::table('vicidial_log')->select('uniqueid')->where('lead_id',$data['lead']->lead_id)->where('list_id',$data['lead']->list_id)->where('user',$user)->first();
 
             $data['uniqueid'] = $vicidial_log->uniqueid;
             $data['etat'] = 200;
             //return response()->json($data);
-        
+            
             
             $lead_id = $data['lead']->lead_id;///
-            
+             
+           // return response()->json($dd);
             
             $phone = DB::table('phones')->where('login',$phone_login)
                                         ->where('pass',$phone_pass)
@@ -883,8 +894,9 @@ class ActionAgentController extends Controller
             $channel = "Local/".$conf_silent_prefix.$conf_exten."@".$ext_context; 
             $vendor_lead_code = $data['lead']->vendor_lead_code;  /// view
             $state = $data['lead']->state; /// view 
-            $postal_code = $data['lead']->postal_code;  /// view
+            $postal_code = $data['lead']->contact_cp;  /// view
             $ACTION = 'manDiaLonly';
+
             $http = new \GuzzleHttp\Client(); 
             $response2 = $http->post('https://call1.harmoniecrm.com/agc/vdc_db_query.php', [
                 'form_params' => [
@@ -923,7 +935,7 @@ class ActionAgentController extends Controller
                     'ACTION' => $ACTION,
                 ],
             ]);
-
+           //return response()->json($response2->getBody()->getContents());
 
             $LiveSipChannel = DB::table('live_sip_channels')->where('server_ip',$server_ip)->where('extension',$conf_exten)->where('channel','LIKE','SIP/'.$user.'%')->first();
             $auto_dial_level = $campaignInfo->auto_dial_level;
@@ -937,8 +949,19 @@ class ActionAgentController extends Controller
             $alt_num_status = 1;
             $leave_3way_start_recording_trigger = 1;
             $leave_3way_start_recording_filename = '';
+            
+            $data['liveagent1'] = DB::table('vicidial_live_agents')->where('user',$user)->first();
+            $data['caller_id'] = $data['liveagent1']->callerid;
+            //return response()->json($liveagent1);
+            //$liveagent1 = DB::table('vicidial_live_agents')->where('user',$user)->first();
+            sleep(1);
+            
+            $data['call_log'] = DB::table('call_log')->select('uniqueid')->where('caller_code',$data['caller_id'])->first();
+            $data['uniqueid1'] = $data['call_log']->uniqueid;
+            //return response()->json($data['call_log']);
             $response3 = $http->post('https://call1.harmoniecrm.com/agc/vdc_db_query.php', [
                 'form_params' => [
+                    'stage' => 'start',
                     'server_ip' => $server_ip, 
                     'session_name' => $session_name, 
                     'conf_exten' => $conf_exten, 
@@ -946,6 +969,7 @@ class ActionAgentController extends Controller
                     'pass' => $pass, 
                     'lead_id' => $lead_id, ////
                     'list_id' => $data['lead']->list_id, ////
+                    'uniqueid' => $data['call_log']->uniqueid,
                     'length_in_sec' => 0,
                     'phone_number' => $phone_number, 
                     'phone_code' => $phone_code, 
@@ -995,13 +1019,24 @@ class ActionAgentController extends Controller
                     'postal_code' => $postal_code, 
                     'ACTION' => 'manDiaLlogCaLL',
                 ],
-            ]); 
+            ]);
+
+           
             $LiveSipChannel = DB::table('live_sip_channels')->where('server_ip',$server_ip)->where('extension',$conf_exten)->where('channel','LIKE','SIP/'.$user.'%')->first();
 
             $data['agentchannel'] = $LiveSipChannel->channel;
             $data['channel'] = $liveagent->channel;
             $data['contents'] = $response2->getBody()->getContents();
+            //$a = json_decode
+            //$a = "M1221606150001811060\n22597\n";
+            //$a = explode("\n",$data['contents']);
+            //$a = $a[0];
+            //dd($a);
             $data['etat'] = 200;
+            $data['res'] = $response3->getBody()->getcontents();
+        
+            
+            
             return response()->json($data);
         }
     }
@@ -1020,7 +1055,7 @@ class ActionAgentController extends Controller
         $data['qualifArg'] = DB::table('vicidial_log')->where(DB::raw("(DATE_FORMAT(call_date,'%Y-%m-%d'))"),$date)
                                                        ->whereIn('status',$argumenter)->where('user',$agentLive)->count();
 
-        $positive = ['DMPDC','DMPDL'];
+        $positive = ['DMPDC','DMPDL','DL','DLDPD','DLDANC','DLDAYC','DLDAIB','DLDDIB'];
         $data['qualifPos'] = DB::table('vicidial_log')->where(DB::raw("(DATE_FORMAT(call_date,'%Y-%m-%d'))"),$date)
                                                        ->whereIn('status',$positive)->where('user',$agentLive)->count();
         
@@ -1084,7 +1119,138 @@ class ActionAgentController extends Controller
         $data['etat'] = 200;
         return response()->json($data);
     }
-   
+    
+     //// fonction qui récuperer la liste des rappels pour un agent (callback)
+    public function getLiveCallback(Request $request){
+        $user = $request->user;
+        $campaign = $request->campaign;
+        $server_ip = $request->server_ip;
+        $timezone  = +1;
+        $now =  gmdate("Y-m-j H:i", time() + 3600*($timezone+date("I")));
+         $liveagent = DB::table('vicidial_live_agents')->where('user',$user)->where('server_ip',$server_ip)->first();
+         if(!empty($liveagent)){
+            if($campaign == 1000101){
+                $list_id = '14112022';
+            }else{
+                $list_id = '141120221';
+            }
+
+            $data['callbacks'] = DB::table('vicidial_callbacks')->where('vicidial_callbacks.user',$user)->where('vicidial_callbacks.campaign_id',$campaign)->where('vicidial_callbacks.lead_status','CBHOLD')->where(DB::raw("(DATE_FORMAT(vicidial_callbacks.callback_time,'%Y-%m-%d %H:%i'))"),$now)
+            ->join('vicidial_list','vicidial_callbacks.lead_id','=','vicidial_list.lead_id')
+            ->join('custom_'.$list_id,'custom_'.$list_id.'.lead_id','=','vicidial_list.lead_id')
+            ->select('vicidial_list.*','custom_'.$list_id.'.*','vicidial_callbacks.callback_id','vicidial_callbacks.callback_time')
+             ->first();
+
+
+             if($data['callbacks'] == ''){
+                $data['callbacks'] ='';
+                $data['etat'] = 500;
+             }else{
+                $data['callbacks'] =$data['callbacks'];
+                $data['etat'] = 200;
+             }
+            return response()->json($data);
+         }else{
+            $data['callbacks'] ='';
+            $data['etat'] = 500;
+            return response()->json($data);
+         }  
+    }
+
+    ///// fonction qui permet de récuperer les pauses code d'une compagne
+    public function getPausesCode(Request $request){
+        $user = $request->user;
+        $campaign = $request->campaign;
+        $server_ip = $request->server_ip;
+
+        $pauses = DB::table('vicidial_pause_codes')->where('campaign_id',$campaign)->get();
+        if(count($pauses)>0){
+            $data['etat'] = 200;
+            $data['pauses'] = $pauses;
+            return response()->json($data);
+        }else{
+            $data['etat'] = 500;
+            $data['pauses'] = '';  
+            return response()->json($data);
+        }
+    }
+    public function changePausesCode(Request $request){
+        $user = $request->user;
+        $pass = $request->pass;
+        $phone_login = $request->phone_login;
+        $phone_pass = $request->phone_pass;
+        $campaign = $request->campaign;
+        $server_ip = $request->server_ip;
+        $conf_exten = $request->conf_exten;
+        $extension = $request->extension;
+        $session_name = $request->session_name;
+        $protocol = $request->protocol;
+        $agent_log_id = $request->agent_log_id;
+        $pause_code = $request->pause_code;
+
+        $userLogged = DB::table('vicidial_users')->where('user',$user)->where('active','Y')->first();
+        $VU_user_group = $userLogged->user_group;
+        $http = new \GuzzleHttp\Client();
+        $response = $http->post('https://call1.harmoniecrm.com/agc/vdc_db_query.php', [
+            'form_params' => [
+                'server_ip' => $server_ip,
+                'session_name' => $session_name,
+                'user' => $user,
+                'pass' => $pass,
+                'MgrApr_user' => $user,
+                'MgrApr_pass'      => $pass,
+                'status'           => $pause_code,
+                'campaign'        => $campaign,
+                'agent_log_id'    => $agent_log_id,
+                'user_group'        => $VU_user_group,
+                'format'       => 'text',
+                'ACTION'       => 'PauseCodeMgrApr'
+            ],
+        ]);
+
+        $phone = DB::table('phones')->where('login',$phone_login)->where('pass',$phone_pass)->where('active','Y')->first();
+        $phone_ip = $phone->phone_ip;
+        $enable_sipsak_messages = $phone->enable_sipsak_messages;
+        $campaignInfo = DB::table('vicidial_campaigns')->where('campaign_id',$campaign)->first();
+        //$dial_method = $campaignInfo->dial_method;
+        $starting_dial_level  = $campaignInfo->auto_dial_level;
+        $response2 = $http->post('https://call1.harmoniecrm.com/agc/vdc_db_query.php', [
+            'form_params' => [
+                'server_ip' => $server_ip,
+                'session_name' => $session_name,
+                'user' => $user,
+                'pass' => $pass,
+                'MgrApr_user' => $user,
+                'MgrApr_pass'      => $pass,
+                'status'           => $pause_code,
+                'campaign'        => $campaign,
+                'agent_log_id'    => $agent_log_id,
+                'user_group'        => $VU_user_group,
+                'extension'  => $extension,
+                'protocol'  => $protocol,
+                'phone_ip'  => $phone_ip,
+                'enable_sipsak_messages'  => $enable_sipsak_messages,
+                'stage'  => '1',
+                'campaign_cid'  => '',
+                'auto_dial_level'  => $starting_dial_level,
+                'MDnextCID'  => '',
+                'format'       => 'text',
+                'ACTION'       => 'PauseCodeSubmit'
+            ],
+        ]);
+
+
+        $data['contents'] = $response2->getBody()->getContents();
+        $data['pause_code'] = $pause_code;
+            if(str_contains($data['contents'],'Pause Code '.$pause_code.' has been recorded')){
+                $data['etat'] = 200;
+                return response()->json($data);
+            }
+            else{
+                $data['etat'] = 500;
+                return response()->json($data);
+            }
+    }
     ///// calculer l'heure de prod
     function heureProd($talk,$wait,$dispo){
         $talktable = explode(':',$talk);

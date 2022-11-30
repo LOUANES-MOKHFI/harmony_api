@@ -34,6 +34,24 @@ class StatController extends Controller
         return response()->json($data);
     }*/
 
+    public function get_all_agents(){
+
+        $data = [];
+        $data['agents'] = DB::table('vicidial_users')->select('user','full_name','user_level','user_group','active')->where('user_level',1)->where('active','Y')->whereIn('user_group',['unadev-harmonie','Unapie_harmonie'])->get()/*->groupBy('user_group')*/;
+
+        return $data;
+    }
+    public function new_show_stat_agents(Request $request){
+        $datetime_start = date('Y-m-d');
+        $datetime_end = date('Y-m-d');
+        $ids = $request->ids;
+        //return response()->json($ids);
+        
+        $data = [];
+        $data['vicidial_agent_log'] = DB::table('vicidial_agent_log')->whereBetween(DB::raw("(DATE_FORMAT(event_time,'%Y-%m-%d'))"), [$datetime_start, $datetime_end])->where('campaign_id','2000202')->whereIn('user',$ids)->get()->groupBy('user');
+
+        return response()->json($data);
+    }
     public function ExportList(Request $request){
         $data = [];
             if($request->campaign_id == 1000101){
@@ -56,18 +74,19 @@ class StatController extends Controller
             ->select('vicidial_list.*','custom_'.$list_id.'.*')
             ->where('vicidial_list.status','<>','NEW')
             ->where('vicidial_list.user','<>','')
+            //->where('vicidial_list.user','<>','VDAD')
             ->where('vicidial_list.status','<>','INCALL')
             ->where(DB::raw("(DATE_FORMAT(modify_date,'%Y-%m-%d'))"),$request->date)->get();
         }
         
-        //$data['lists'] = $lists;
-        
+        //$data['lists'] = ;
+        //dd($lists);
         return response()->json($lists);
     }
     public function getUserName(Request $request){
         $agentId = $request->user_id;
 
-        $Agent = DB::table('vicidial_users')->where('user',$agentId)->first();
+        $Agent = DB::table('vicidial_users')->select('user','full_name')->where('user',$agentId)->first();
         if(!$Agent){
             $data['etat'] = 500;
             return response()->json($data);

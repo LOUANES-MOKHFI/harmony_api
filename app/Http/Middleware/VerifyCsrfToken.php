@@ -40,7 +40,11 @@ class VerifyCsrfToken extends Middleware
         'https://call1.harmoniecrm.com/louanes/harmony_api/index.php/get_user_name',
         'https://call1.harmoniecrm.com/louanes/harmony_api/index.php/manual_dial',
         'https://call1.harmoniecrm.com/louanes/harmony_api/index.php/get_phone_info',
-    
+        'https://call1.harmoniecrm.com/louanes/harmony_api/index.php/get_live_callback',
+        'https://call1.harmoniecrm.com/louanes/harmony_api/index.php/get_pauses_codes',
+        'https://call1.harmoniecrm.com/louanes/harmony_api/index.php/change_pause_code',
+        'https://call1.harmoniecrm.com/louanes/harmony_api/index.php/get_all_agents',
+        'https://call1.harmoniecrm.com/louanes/harmony_api/index.php/new_show_stat_agents',
 
     ];
 }

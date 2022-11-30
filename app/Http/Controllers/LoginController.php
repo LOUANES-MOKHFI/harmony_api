@@ -91,6 +91,7 @@ class LoginController extends Controller
 
                 $data['user'] = $user->user;
                 $data['pass'] = $user->pass;
+                $data['full_name'] = $user->full_name;
                 $data['phone_login'] = $user->phone_login;
                 $data['phone_pass'] = $user->phone_pass;
                 $data['server_ip'] = $phone->server_ip;
