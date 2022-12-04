@@ -692,18 +692,24 @@ class ActionAgentController extends Controller
             
             $list = DB::table('vicidial_list')->where('vicidial_list.user',$user)
                                               ->where('vicidial_list.lead_id',$lead_id)->first();
-            $list_id = $list->list_id;
-            //$called_count = $list->called_count;
-            $table = 'custom_'.$list_id;
-            //return response()->json($list_id);
-            $data['lead'] = DB::table($table)->where($table.'.lead_id',$lead_id)->first();
-            //return response()->json($data);
-            $vicidial_log = DB::table('vicidial_log')->select('uniqueid')->where('lead_id',$lead_id)->where('list_id',$list_id)->where('user',$user)->first();
+            if(!$list){
+                $data['lead'] ='';
+                $data['etat'] = 500;
+                return response()->json($data);
+            }else{
+                $list_id = $list->list_id;
+                //$called_count = $list->called_count;
+                $table = 'custom_'.$list_id;
+                //return response()->json($list_id);
+                $data['lead'] = DB::table($table)->where($table.'.lead_id',$lead_id)->first();
+                //return response()->json($data);
+                $vicidial_log = DB::table('vicidial_log')->select('uniqueid')->where('lead_id',$lead_id)->where('list_id',$list_id)->where('user',$user)->first();
 
 
-            $data['uniqueid'] = $vicidial_log->uniqueid;
-            $data['etat'] = 200;
-            return response()->json($data);
+                $data['uniqueid'] = $vicidial_log->uniqueid;
+                $data['etat'] = 200;
+                return response()->json($data);
+            }
         }else{
             $data['lead'] ='';
             $data['etat'] = 500;

@@ -39,16 +39,22 @@ class StatController extends Controller
         $data = [];
         $data['agents'] = DB::table('vicidial_users')->select('user','full_name','user_level','user_group','active')->where('user_level',1)->where('active','Y')->whereIn('user_group',['unadev-harmonie','Unapie_harmonie'])->get()/*->groupBy('user_group')*/;
 
+        $data['campaigns'] = DB::table('vicidial_campaigns')->select('campaign_id','campaign_name','active')              ->where('active','Y')->get();
+        $data['lists'] = DB::table('vicidial_lists')->select('list_id','list_name','campaign_id','active')              ->where('active','Y')->get()->groupBy(function($list) {
+            return $list->campaign_id;
+        });
         return $data;
     }
     public function new_show_stat_agents(Request $request){
         $datetime_start = date('Y-m-d');
         $datetime_end = date('Y-m-d');
         $ids = $request->ids;
-        //return response()->json($ids);
+        $campaignsids = $request->campaignsids;
+        $day = $request->day;
+        //return response()->json($campaignsids);
         
         $data = [];
-        $data['vicidial_agent_log'] = DB::table('vicidial_agent_log')->whereBetween(DB::raw("(DATE_FORMAT(event_time,'%Y-%m-%d'))"), [$datetime_start, $datetime_end])->where('campaign_id','2000202')->whereIn('user',$ids)->get()->groupBy('user');
+        $data['vicidial_agent_log'] = DB::table('vicidial_agent_log')/*->whereBetween(DB::raw("(DATE_FORMAT(event_time,'%Y-%m-%d'))"), [$datetime_start, $datetime_end])*/->where(DB::raw("(DATE_FORMAT(event_time,'%Y-%m-%d'))"),$day)->whereIn('campaign_id',$campaignsids)->whereIn('user',$ids)->get()->groupBy('user');
 
         return response()->json($data);
     }
